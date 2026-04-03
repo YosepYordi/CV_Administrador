@@ -1,4 +1,4 @@
-package mavenproject1.gest_curriculums;
+package cv_administrador;
 
 import jakarta.ws.rs.ApplicationPath;
 import jakarta.ws.rs.core.Application;
