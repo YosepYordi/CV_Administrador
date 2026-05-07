@@ -1,0 +1,64 @@
+- generic [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link " CV Manager" [ref=e4] [cursor=pointer]:
+        - /url: /cvmanager/public/home
+        - generic [ref=e5]: 
+        - text: CV Manager
+      - list [ref=e7]:
+        - listitem [ref=e8]:
+          - link "Inicio" [ref=e9] [cursor=pointer]:
+            - /url: /cvmanager/public/home
+        - listitem [ref=e10]:
+          - link "Acerca" [ref=e11] [cursor=pointer]:
+            - /url: /cvmanager/public/about
+        - listitem [ref=e12]:
+          - link "Contacto" [ref=e13] [cursor=pointer]:
+            - /url: /cvmanager/public/contact
+        - listitem [ref=e14]:
+          - link "Ingresar" [ref=e15] [cursor=pointer]:
+            - /url: /cvmanager/auth/login
+        - listitem [ref=e16]:
+          - link "Crear cuenta" [ref=e17] [cursor=pointer]:
+            - /url: /cvmanager/auth/register
+  - main [ref=e18]:
+    - generic [ref=e21]:
+      - text: Alta de usuarios
+      - heading "Crear nueva cuenta" [level=1] [ref=e22]
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]: Tipo de cuenta
+          - combobox [ref=e26]:
+            - option "Egresado" [selected]
+            - option "Empresa"
+        - generic [ref=e27]:
+          - generic [ref=e28]: Correo
+          - textbox [ref=e29]: orediazyosepyordi@gmail.com
+        - generic [ref=e30]:
+          - generic [ref=e31]: Contraseña
+          - textbox [ref=e32]: Yordi2026
+        - generic [ref=e33]:
+          - generic [ref=e34]: Confirmación sugerida
+          - textbox [ref=e35]: Mínimo 8 caracteres, letras y números
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - generic [ref=e38]: Nombres
+            - textbox [active] [ref=e39]: Yosep Yordi
+          - generic [ref=e40]:
+            - generic [ref=e41]: Apellidos
+            - textbox [ref=e42]: Orediaz
+          - generic [ref=e43]:
+            - generic [ref=e44]: Carrera
+            - combobox [ref=e45]:
+              - option "Seleccionar"
+              - option "Administracion de Redes"
+              - option "Diseno Grafico Digital"
+              - option "Ingenieria de Software" [selected]
+          - generic [ref=e46]:
+            - generic [ref=e47]: Año de egreso
+            - spinbutton [ref=e48]
+          - generic [ref=e50]: Para egresados puedes registrarte con cualquier correo valido.
+        - generic [ref=e51]:
+          - button "Registrar" [ref=e52] [cursor=pointer]
+          - link "Volver al login" [ref=e53] [cursor=pointer]:
+            - /url: /cvmanager/auth/login

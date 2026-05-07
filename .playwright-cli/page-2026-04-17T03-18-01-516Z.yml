@@ -1,0 +1,46 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link " CV Manager" [ref=e4] [cursor=pointer]:
+        - /url: /cvmanager/public/home
+        - generic [ref=e5]: 
+        - text: CV Manager
+      - list [ref=e7]:
+        - listitem [ref=e8]:
+          - link "Panel" [ref=e9] [cursor=pointer]:
+            - /url: /cvmanager/graduate/dashboard
+        - listitem [ref=e10]:
+          - link "Perfil" [ref=e11] [cursor=pointer]:
+            - /url: /cvmanager/graduate/profile
+        - listitem [ref=e12]:
+          - link "Mi CV" [ref=e13] [cursor=pointer]:
+            - /url: /cvmanager/graduate/cv
+        - listitem [ref=e14]:
+          - link "Cerrar sesión" [ref=e15] [cursor=pointer]:
+            - /url: /cvmanager/auth/logout
+  - main [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e19]:
+        - text: Bienvenido
+        - heading "Yosep Yordi Orediaz" [level=1] [ref=e20]
+        - paragraph [ref=e21]: Mi perfil profesional
+        - generic [ref=e22]:
+          - generic [ref=e24]:
+            - generic [ref=e25]: CV publicado
+            - generic [ref=e26]: "No"
+          - generic [ref=e28]:
+            - generic [ref=e29]: Visualizaciones
+            - generic [ref=e30]: "0"
+          - generic [ref=e32]:
+            - generic [ref=e33]: Disponibilidad
+            - generic [ref=e34]: Por definir
+      - complementary [ref=e36]:
+        - heading "Accesos rápidos" [level=3] [ref=e37]
+        - generic [ref=e38]:
+          - link "Editar perfil" [ref=e39] [cursor=pointer]:
+            - /url: /cvmanager/graduate/profile/edit
+          - link "Actualizar CV" [ref=e40] [cursor=pointer]:
+            - /url: /cvmanager/graduate/cv/edit
+      - generic [ref=e42]:
+        - heading "Resumen profesional" [level=2] [ref=e43]
+        - paragraph [ref=e44]: Resume aqui tu propuesta de valor, experiencia y objetivos.
