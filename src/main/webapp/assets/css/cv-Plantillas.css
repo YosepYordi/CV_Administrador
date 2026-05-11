@@ -1,0 +1,22 @@
+/* Estilos para plantillas de CV */
+.cv-header {
+    flex-wrap: wrap;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+}
+
+.cv-section + .cv-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.cv-avatar {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    border: 3px solid rgba(94, 234, 212, 0.18);
+}

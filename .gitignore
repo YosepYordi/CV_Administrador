@@ -1,11 +1,16 @@
 target/
-build/
-dist/
-nbbuild/
-nbdist/
+/build/
+/dist/
+/nbbuild/
+/nbdist/
 .nb-gradle/
+.runtime/
+.playwright-cli/
 
 nbproject/private/
+src/main/resources/database.properties
+.env
+docker/.env
 
 .DS_Store
 Thumbs.db
