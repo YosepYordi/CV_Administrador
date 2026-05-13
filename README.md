@@ -46,7 +46,7 @@ db.url=jdbc:mysql://localhost:3306/CV_Administrador?useSSL=false&allowPublicKeyR
 db.username=TU_USUARIO_MYSQL
 db.password=TU_PASSWORD_MYSQL
 admin.email=admin@instituto.edu.pe
-admin.password=CAMBIA_ESTA_CLAVE_FUERTE
+admin.password=AdminClave123!
 ```
 
 4. Si el usuario MySQL tiene permiso `CREATE DATABASE`, la aplicacion puede crear la base y tablas al arrancar.
@@ -59,7 +59,14 @@ No hay una contrasena admin fija en el repositorio. La contrasena del admin inic
 - `admin.password` dentro de `src/main/resources/database.properties`, o
 - la variable de entorno `ADMIN_PASSWORD`.
 
-El correo admin inicial sale de `admin.email` o `ADMIN_EMAIL`. Si ya existia un admin creado con una clave insegura conocida, al arrancar con un `admin.password` fuerte la aplicacion rota esa clave al nuevo valor configurado.
+Para desarrollo local del equipo, pueden usar:
+
+```properties
+admin.email=admin@instituto.edu.pe
+admin.password=AdminClave123!
+```
+
+El archivo `database.properties` no se sube a Git, asi que cada integrante debe copiar `database.example.properties`, poner esos valores localmente y arrancar la app. El correo admin inicial sale de `admin.email` o `ADMIN_EMAIL`. Si ya existia un admin creado con una clave insegura conocida, al arrancar con un `admin.password` fuerte la aplicacion rota esa clave al nuevo valor configurado.
 
 ## Comandos utiles
 
