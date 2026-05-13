@@ -4,6 +4,7 @@ import jakarta.servlet.http.Part;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.UUID;
 
 public final class ArchivoUtil {
@@ -14,18 +15,28 @@ public final class ArchivoUtil {
     }
 
     public static String getSafeFileName(Part part) {
-        String submitted = part == null ? "" : part.getSubmittedFileName();
-        String name = submitted == null ? "archivo" : submitted.replace("\\", "/");
-        int slash = name.lastIndexOf('/');
-        if (slash >= 0) name = name.substring(slash + 1);
-        return UUID.randomUUID() + "-" + name.replaceAll("[^A-Za-z0-9._-]", "_");
+        return UUID.randomUUID().toString();
     }
 
     public static String savePart(Part part, Path directory) throws IOException {
+        return savePart(part, directory, "");
+    }
+
+    public static String savePart(Part part, Path directory, String extension) throws IOException {
         if (part == null || part.getSize() <= 0) return null;
         ensureDirectory(directory);
-        String fileName = getSafeFileName(part);
+        String fileName = getSafeFileName(part) + normalizeExtension(extension);
         part.write(directory.resolve(fileName).toString());
         return fileName;
+    }
+
+    private static String normalizeExtension(String extension) {
+        if (extension == null || extension.isBlank()) return "";
+        String value = extension.trim();
+        if (value.startsWith(".")) value = value.substring(1);
+        if (!value.matches("[A-Za-z0-9]{1,10}")) {
+            throw new IllegalArgumentException("Extension de archivo no permitida.");
+        }
+        return "." + value.toLowerCase(Locale.ROOT);
     }
 }

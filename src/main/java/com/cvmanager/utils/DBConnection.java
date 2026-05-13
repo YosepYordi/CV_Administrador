@@ -35,6 +35,8 @@ public final class DBConnection {
 
     public static String property(String key, String defaultValue) {
         if ("db.name".equals(key)) return env("DB_NAME", PROPS.getProperty(key, defaultValue));
+        if ("admin.email".equals(key)) return env("ADMIN_EMAIL", PROPS.getProperty(key, defaultValue));
+        if ("admin.password".equals(key)) return env("ADMIN_PASSWORD", PROPS.getProperty(key, defaultValue));
         return PROPS.getProperty(key, defaultValue);
     }
 
