@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public class CVDAOImpl extends JdbcSupport implements CVDAO {
     private static final String BASE_SELECT =
-            "SELECT cv.*, CONCAT(e.first_name, ' ', e.last_name) AS graduate_name, c.name AS career_name, e.city, " +
+            "SELECT cv.*, CONCAT(e.first_name, ' ', e.last_name) AS graduate_name, e.photo_url AS graduate_photo_url, c.name AS career_name, e.city, " +
             "e.is_public AS graduate_public, " +
             "COALESCE((SELECT ROUND(SUM(TIMESTAMPDIFF(MONTH, ex.start_date, COALESCE(ex.end_date, CURDATE()))) / 12, 1) FROM experiencia ex WHERE ex.cv_id = cv.cv_id), 0) AS experience_years " +
             "FROM cvs cv JOIN egresados e ON e.graduate_id = cv.graduate_id LEFT JOIN careers c ON c.career_id = e.career_id";
@@ -148,6 +148,7 @@ public class CVDAOImpl extends JdbcSupport implements CVDAO {
         cv.setCreatedAt(dateTime(rs, "created_at"));
         cv.setUpdatedAt(dateTime(rs, "updated_at"));
         cv.setGraduateName(rs.getString("graduate_name"));
+        cv.setGraduatePhotoUrl(rs.getString("graduate_photo_url"));
         cv.setCareerName(rs.getString("career_name"));
         cv.setCity(rs.getString("city"));
         cv.setGraduatePublic(rs.getBoolean("graduate_public"));

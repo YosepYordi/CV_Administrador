@@ -65,7 +65,7 @@
         <div class="dashboard-card p-4">
             <h2 class="section-title h4 mb-3">Solicitudes por estado</h2>
             <div class="row g-3">
-                <c:forEach items="${stats.contactRequestsByStatus}" var="entry">
+                <c:forEach items="${stats.contactRequestsByStatusDisplay}" var="entry">
                     <div class="col-md-4">
                         <div class="metric-card">
                             <div class="muted small">${entry.key}</div>

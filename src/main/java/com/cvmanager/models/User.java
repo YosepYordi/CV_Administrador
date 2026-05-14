@@ -5,10 +5,15 @@ import java.time.LocalDateTime;
 
 public class User implements Serializable {
     public enum Role {
-        GRADUATE("graduate"), COMPANY("company"), ADMIN("admin");
+        GRADUATE("graduate", "Egresado"), COMPANY("company", "Empresa"), ADMIN("admin", "Administrador");
         private final String value;
-        Role(String value) { this.value = value; }
+        private final String label;
+        Role(String value, String label) {
+            this.value = value;
+            this.label = label;
+        }
         public String getValue() { return value; }
+        public String getLabel() { return label; }
         public static Role from(String value) {
             for (Role role : values()) {
                 if (role.value.equalsIgnoreCase(value) || role.name().equalsIgnoreCase(value)) return role;
@@ -18,10 +23,15 @@ public class User implements Serializable {
     }
 
     public enum Status {
-        ACTIVE("active"), INACTIVE("inactive"), PENDING("pending");
+        ACTIVE("active", "Activo"), INACTIVE("inactive", "Inactivo"), PENDING("pending", "Pendiente");
         private final String value;
-        Status(String value) { this.value = value; }
+        private final String label;
+        Status(String value, String label) {
+            this.value = value;
+            this.label = label;
+        }
         public String getValue() { return value; }
+        public String getLabel() { return label; }
         public static Status from(String value) {
             for (Status status : values()) {
                 if (status.value.equalsIgnoreCase(value) || status.name().equalsIgnoreCase(value)) return status;

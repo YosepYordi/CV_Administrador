@@ -2,6 +2,7 @@ package com.cvmanager.controllers;
 
 import com.cvmanager.models.User;
 import com.cvmanager.utils.Constantes;
+import com.cvmanager.utils.RedirectUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -18,7 +19,7 @@ public abstract class BaseServlet extends HttpServlet {
     }
 
     protected void redirect(HttpServletRequest request, HttpServletResponse response, String path) throws IOException {
-        response.sendRedirect(request.getContextPath() + path);
+        RedirectUtil.redirect(request, response, path);
     }
 
     protected User currentUser(HttpServletRequest request) {

@@ -33,6 +33,18 @@ public class CompanyDAOImpl extends JdbcSupport implements CompanyDAO {
     }
 
     @Override
+    public List<Company> findAllActive() throws SQLException {
+        String sql = "SELECT c.* FROM companies c JOIN usuarios u ON u.user_id = c.user_id WHERE u.status = 'active' ORDER BY COALESCE(c.company_name, u.email)";
+        try (Connection cn = DBConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            List<Company> companies = new ArrayList<>();
+            while (rs.next()) companies.add(map(rs));
+            return companies;
+        }
+    }
+
+    @Override
     public Long create(Company company) throws SQLException {
         String sql = "INSERT INTO companies (user_id, company_name, ruc, industry, company_size, phone, website, description, logo_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection cn = DBConnection.getConnection();

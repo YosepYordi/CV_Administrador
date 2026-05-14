@@ -68,8 +68,8 @@ public class AdminServlet extends BaseServlet {
             request.setAttribute("stats", stats);
             java.util.List<User> users = usuarioDAO.findAll();
             request.setAttribute("recentUsers", users.subList(0, Math.min(10, users.size())));
-            request.setAttribute("roleCounts", stats.getRoleCounts());
-            request.setAttribute("statusCounts", stats.getStatusCounts());
+            request.setAttribute("roleCounts", stats.getRoleCountsDisplay());
+            request.setAttribute("statusCounts", stats.getStatusCountsDisplay());
             forward(request, response, "/WEB-INF/views/admin/Panel.jsp", "Dashboard administrativo");
         } catch (Exception ex) {
             request.setAttribute("formError", "No se pudo cargar el panel. " + ex.getMessage());

@@ -53,10 +53,40 @@ public class DashboardStats {
     public void setTotalSearches(long totalSearches) { this.totalSearches = totalSearches; }
     public Map<String, Long> getRoleCounts() { return roleCounts; }
     public void setRoleCounts(Map<String, Long> roleCounts) { this.roleCounts = roleCounts; }
+    public Map<String, Long> getRoleCountsDisplay() { return labelsForRoles(roleCounts); }
     public Map<String, Long> getStatusCounts() { return statusCounts; }
     public void setStatusCounts(Map<String, Long> statusCounts) { this.statusCounts = statusCounts; }
+    public Map<String, Long> getStatusCountsDisplay() { return labelsForUserStatuses(statusCounts); }
     public Map<String, Long> getGraduatesByCareer() { return graduatesByCareer; }
     public void setGraduatesByCareer(Map<String, Long> graduatesByCareer) { this.graduatesByCareer = graduatesByCareer; }
     public Map<String, Long> getContactRequestsByStatus() { return contactRequestsByStatus; }
     public void setContactRequestsByStatus(Map<String, Long> contactRequestsByStatus) { this.contactRequestsByStatus = contactRequestsByStatus; }
+    public Map<String, Long> getContactRequestsByStatusDisplay() { return labelsForContactRequestStatuses(contactRequestsByStatus); }
+
+    private Map<String, Long> labelsForRoles(Map<String, Long> values) {
+        Map<String, Long> labels = new LinkedHashMap<>();
+        if (values == null) return labels;
+        for (Map.Entry<String, Long> entry : values.entrySet()) {
+            labels.put(User.Role.from(entry.getKey()).getLabel(), entry.getValue());
+        }
+        return labels;
+    }
+
+    private Map<String, Long> labelsForUserStatuses(Map<String, Long> values) {
+        Map<String, Long> labels = new LinkedHashMap<>();
+        if (values == null) return labels;
+        for (Map.Entry<String, Long> entry : values.entrySet()) {
+            labels.put(User.Status.from(entry.getKey()).getLabel(), entry.getValue());
+        }
+        return labels;
+    }
+
+    private Map<String, Long> labelsForContactRequestStatuses(Map<String, Long> values) {
+        Map<String, Long> labels = new LinkedHashMap<>();
+        if (values == null) return labels;
+        for (Map.Entry<String, Long> entry : values.entrySet()) {
+            labels.put(ContactRequest.Status.from(entry.getKey()).getLabel(), entry.getValue());
+        }
+        return labels;
+    }
 }

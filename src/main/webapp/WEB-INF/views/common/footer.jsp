@@ -5,6 +5,6 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
     <script src="${pageContext.request.contextPath}/assets/js/validacion.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/cv-Constructor.js"></script>
+    <script src="${pageContext.request.contextPath}/assets/js/cv-Constructor.js?v=20260514-2"></script>
 </body>
 </html>

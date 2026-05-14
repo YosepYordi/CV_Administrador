@@ -2,6 +2,7 @@ package com.cvmanager.filters;
 
 import com.cvmanager.models.User;
 import com.cvmanager.utils.Constantes;
+import com.cvmanager.utils.RedirectUtil;
 
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
@@ -18,7 +19,7 @@ public class Autorizacion_Filtro implements Filter {
         User user = (User) req.getSession().getAttribute(Constantes.SESSION_USER);
         String path = req.getServletPath();
         if (user == null) {
-            res.sendRedirect(req.getContextPath() + "/auth/login");
+            RedirectUtil.redirect(req, res, "/auth/login");
             return;
         }
         if ((path.startsWith("/admin") && !user.isAdmin()) ||

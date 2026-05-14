@@ -14,7 +14,7 @@ Sistema web para la gestion de curriculum vitae de egresados y busqueda de talen
 
 ## Requisitos
 
-- JDK 25. En NetBeans puede usarse `C:\Program Files\Apache NetBeans\jdk`.
+- JDK 21. En este entorno puede usarse `C:\Users\yordi\.Antigravity\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64`.
 - MySQL 8. Puede levantarse con Docker Desktop o instalarse localmente con MySQL Server.
 - MySQL Workbench es opcional y sirve como cliente grafico; por si solo no reemplaza a MySQL Server.
 - Maven incluido en `apache-maven/` o una instalacion local compatible.
@@ -31,6 +31,13 @@ Levantar la base de datos:
 
 ```powershell
 docker compose -f docker/docker-compose.yml up -d
+```
+
+Levantar IA local para importar CV desde PDF:
+
+```powershell
+docker run -d --name cv_ollama -v cv_ollama:/root/.ollama -p 11434:11434 --restart unless-stopped ollama/ollama
+docker exec cv_ollama ollama pull gemma4:e2b
 ```
 
 ### Opcion B: MySQL local con Workbench, sin Docker
@@ -73,7 +80,7 @@ El archivo `database.properties` no se sube a Git, asi que cada integrante debe 
 Ejecutar pruebas:
 
 ```powershell
-$env:JAVA_HOME='C:\Program Files\Apache NetBeans\jdk'
+$env:JAVA_HOME='C:\Users\yordi\.Antigravity\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64'
 $env:PATH="$env:JAVA_HOME\bin;$env:PATH"
 .\apache-maven\bin\mvn.cmd test
 ```

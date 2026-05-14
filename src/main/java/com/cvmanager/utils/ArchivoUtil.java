@@ -2,8 +2,10 @@ package com.cvmanager.utils;
 
 import jakarta.servlet.http.Part;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -26,7 +28,10 @@ public final class ArchivoUtil {
         if (part == null || part.getSize() <= 0) return null;
         ensureDirectory(directory);
         String fileName = getSafeFileName(part) + normalizeExtension(extension);
-        part.write(directory.resolve(fileName).toString());
+        Path target = directory.resolve(fileName).normalize();
+        try (InputStream input = part.getInputStream()) {
+            Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING);
+        }
         return fileName;
     }
 

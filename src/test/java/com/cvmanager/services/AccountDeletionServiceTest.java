@@ -42,7 +42,7 @@ class AccountDeletionServiceTest {
         User admin = user(1L, "admin@instituto.edu.pe", User.Role.ADMIN);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.deleteUserAsAdmin(admin, 1L, "DELETE USER"));
+                () -> service.deleteUserAsAdmin(admin, 1L, "ELIMINAR USUARIO"));
 
         assertTrue(ex.getMessage().contains("propia cuenta"));
         assertEquals(0, dao.deletedUsers);
@@ -56,7 +56,7 @@ class AccountDeletionServiceTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.deleteCvForGraduate(12L, "DELETE"));
 
-        assertTrue(ex.getMessage().contains("DELETE CV"));
+        assertTrue(ex.getMessage().contains("ELIMINAR CV"));
         assertEquals(0, dao.deletedCvs);
     }
 
@@ -65,7 +65,7 @@ class AccountDeletionServiceTest {
         RecordingDeletionDAO dao = new RecordingDeletionDAO();
         AccountDeletionService service = new AccountDeletionService(dao);
 
-        DeletionSummary summary = service.deleteCvForGraduate(12L, "DELETE CV");
+        DeletionSummary summary = service.deleteCvForGraduate(12L, "ELIMINAR CV");
 
         assertEquals(12L, dao.lastGraduateId);
         assertEquals(1, summary.getDeletedCvs());

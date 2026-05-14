@@ -47,6 +47,26 @@ class ArchivoServicioSecurityTest {
     }
 
     @Test
+    void savePhotoStreamsFileWithoutDelegatingToContainerWrite() throws Exception {
+        Archivo_Servicio servicio = new Archivo_Servicio();
+
+        String saved = servicio.savePhoto(partThatRejectsWrite("photo.png", "image/png", PNG_BYTES), context(tempDir));
+
+        assertTrue(saved.matches("/uploads/photos/[0-9a-f\\-]{36}\\.png"));
+        assertArrayEquals(PNG_BYTES, Files.readAllBytes(storedPath(tempDir, saved)));
+    }
+
+    @Test
+    void savePhotoUsesWebRootWhenUploadDirectoryDoesNotExistYet() throws Exception {
+        Archivo_Servicio servicio = new Archivo_Servicio();
+
+        String saved = servicio.savePhoto(part("photo.png", "image/png", PNG_BYTES), contextWithMissingUploadDir(tempDir));
+
+        assertTrue(saved.matches("/uploads/photos/[0-9a-f\\-]{36}\\.png"));
+        assertTrue(Files.exists(storedPath(tempDir, saved)));
+    }
+
+    @Test
     void saveCvPdfRejectsScriptPayloadEvenWhenClientClaimsPdf() {
         Archivo_Servicio servicio = new Archivo_Servicio();
         byte[] jspPayload = "<% out.println(\"pwned\"); %>".getBytes(StandardCharsets.UTF_8);
@@ -86,6 +106,20 @@ class ArchivoServicioSecurityTest {
                 });
     }
 
+    private static ServletContext contextWithMissingUploadDir(Path root) {
+        return (ServletContext) Proxy.newProxyInstance(
+                ServletContext.class.getClassLoader(),
+                new Class<?>[]{ServletContext.class},
+                (proxy, method, args) -> {
+                    if ("getRealPath".equals(method.getName())) {
+                        String webPath = (String) args[0];
+                        if ("/".equals(webPath)) return root.toString();
+                        if (webPath.startsWith("/uploads/")) return null;
+                    }
+                    return defaultValue(method.getReturnType());
+                });
+    }
+
     private static Part part(String submittedFileName, String contentType, byte[] bytes) {
         return (Part) Proxy.newProxyInstance(
                 Part.class.getClassLoader(),
@@ -105,6 +139,34 @@ class ArchivoServicioSecurityTest {
                             Files.createDirectories(target.getParent());
                             Files.write(target, bytes);
                             return null;
+                        case "delete":
+                            return null;
+                        case "getHeaderNames":
+                            return List.of();
+                        case "getHeaders":
+                            return List.of();
+                        default:
+                            return defaultValue(method.getReturnType());
+                    }
+                });
+    }
+
+    private static Part partThatRejectsWrite(String submittedFileName, String contentType, byte[] bytes) {
+        return (Part) Proxy.newProxyInstance(
+                Part.class.getClassLoader(),
+                new Class<?>[]{Part.class},
+                (proxy, method, args) -> {
+                    switch (method.getName()) {
+                        case "getSubmittedFileName":
+                            return submittedFileName;
+                        case "getContentType":
+                            return contentType;
+                        case "getSize":
+                            return (long) bytes.length;
+                        case "getInputStream":
+                            return new ByteArrayInputStream(bytes);
+                        case "write":
+                            throw new IllegalStateException("Container rejected absolute path");
                         case "delete":
                             return null;
                         case "getHeaderNames":

@@ -1,11 +1,14 @@
 package com.cvmanager.controllers;
 
 import com.cvmanager.dao.impl.EgresadoDAOImpl;
+import com.cvmanager.dao.impl.CompanyDAOImpl;
+import com.cvmanager.dao.interfaces.CompanyDAO;
 import com.cvmanager.models.*;
 import com.cvmanager.services.AccountDeletionService;
 import com.cvmanager.services.Archivo_Servicio;
-import com.cvmanager.services.CVPdfService;
+import com.cvmanager.services.CVImportDraft;
 import com.cvmanager.services.CVService;
+import com.cvmanager.services.OllamaCVImportService;
 import com.cvmanager.utils.Constantes;
 import com.cvmanager.utils.ValidacionUtil;
 import org.apache.logging.log4j.LogManager;
@@ -28,9 +31,10 @@ public class CVServlet extends BaseServlet {
     private static final Logger logger = LogManager.getLogger(CVServlet.class);
     private final CVService cvService = new CVService();
     private final EgresadoDAOImpl egresadoDAO = new EgresadoDAOImpl();
+    private final CompanyDAO companyDAO = new CompanyDAOImpl();
     private final Archivo_Servicio archivoServicio = new Archivo_Servicio();
-    private final CVPdfService pdfService = new CVPdfService();
     private final AccountDeletionService accountDeletionService = new AccountDeletionService();
+    private final OllamaCVImportService importService = new OllamaCVImportService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -52,6 +56,10 @@ public class CVServlet extends BaseServlet {
                 }
                 request.setAttribute("cv", cv);
                 request.setAttribute("readonly", true);
+                if (isCompanyUser(request)) {
+                    request.setAttribute("favoriteIds", companyFavoriteIds(request));
+                    request.setAttribute("returnTo", "/cv/view?id=" + cv.getCvId());
+                }
                 forward(request, response, "/WEB-INF/views/graduate/cv.jsp", "CV publicado");
                 return;
             }
@@ -78,38 +86,59 @@ public class CVServlet extends BaseServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        writePdf(response, cv);
+        redirectToOriginalPdf(request, response, cv);
     }
 
     private void writeGraduatePdf(HttpServletRequest request, HttpServletResponse response) throws Exception {
         Egresados graduate = currentGraduate(request);
         CV cv = cvService.getOrCreateByGraduateId(graduate.getGraduateId());
         fillGraduateData(cv, graduate);
-        writePdf(response, cv);
+        redirectToOriginalPdf(request, response, cv);
     }
 
-    private void writePdf(HttpServletResponse response, CV cv) throws IOException {
-        byte[] pdf = pdfService.generate(cv);
-        response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "inline; filename=\"" + pdfFileName(cv) + "\"");
-        response.setContentLength(pdf.length);
-        response.getOutputStream().write(pdf);
+    private void redirectToOriginalPdf(HttpServletRequest request, HttpServletResponse response, CV cv) throws IOException {
+        if (cv == null || ValidacionUtil.isBlank(cv.getCvPdfUrl())) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "No hay CV original en PDF adjuntado.");
+            return;
+        }
+        String pdfUrl = cv.getCvPdfUrl();
+        if (pdfUrl.startsWith(request.getContextPath() + "/")) {
+            response.sendRedirect(pdfUrl);
+        } else if (pdfUrl.startsWith("/")) {
+            response.sendRedirect(request.getContextPath() + pdfUrl);
+        } else {
+            response.sendRedirect(pdfUrl);
+        }
     }
 
     private void fillGraduateData(CV cv, Egresados graduate) {
         if (ValidacionUtil.isBlank(cv.getGraduateName())) cv.setGraduateName(graduate.getFullName());
+        if (ValidacionUtil.isBlank(cv.getGraduatePhotoUrl())) cv.setGraduatePhotoUrl(graduate.getPhotoUrl());
         if (ValidacionUtil.isBlank(cv.getCareerName())) cv.setCareerName(graduate.getCareerName());
         if (ValidacionUtil.isBlank(cv.getCity())) cv.setCity(graduate.getCity());
     }
 
-    private String pdfFileName(CV cv) {
-        String name = ValidacionUtil.isBlank(cv.getGraduateName()) ? "cv" : cv.getGraduateName().toLowerCase();
-        String slug = name.replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
-        return (slug.isBlank() ? "cv" : slug) + ".pdf";
-    }
-
     private boolean isPubliclyVisible(CV cv) {
         return cv != null && cv.isPublished() && cv.isGraduatePublic();
+    }
+
+    private boolean isCompanyUser(HttpServletRequest request) {
+        User user = currentUser(request);
+        return user != null && user.isCompany();
+    }
+
+    private List<Long> companyFavoriteIds(HttpServletRequest request) throws Exception {
+        User user = currentUser(request);
+        if (user == null || user.getUserId() == null) return List.of();
+        return companyDAO.findByUserId(user.getUserId())
+                .map(company -> {
+                    try {
+                        return companyDAO.findFavoriteCvIds(company.getCompanyId());
+                    } catch (Exception ex) {
+                        return List.<Long>of();
+                    }
+                })
+                .orElse(List.of());
     }
 
     @Override
@@ -118,6 +147,14 @@ public class CVServlet extends BaseServlet {
             Egresados graduate = currentGraduate(request);
             if ("deleteCv".equals(request.getParameter("action"))) {
                 deleteGraduateCv(request, response, graduate);
+                return;
+            }
+            if ("togglePublished".equals(request.getParameter("action"))) {
+                togglePublished(request, response, graduate);
+                return;
+            }
+            if ("importAi".equals(request.getParameter("action"))) {
+                importGraduateCv(request, response, graduate);
                 return;
             }
             CV cv = cvService.getOrCreateByGraduateId(graduate.getGraduateId());
@@ -140,6 +177,39 @@ public class CVServlet extends BaseServlet {
             request.setAttribute("formError", ex.getMessage() == null ? "No se pudo guardar el CV." : ex.getMessage());
             doGet(request, response);
         }
+    }
+
+    private void importGraduateCv(HttpServletRequest request, HttpServletResponse response, Egresados graduate) throws Exception {
+        CV cv = cvService.getOrCreateByGraduateId(graduate.getGraduateId());
+        Part pdf = request.getPart("cvPdf");
+        CVImportDraft draft = importService.importFromPdf(pdf);
+        String previousPdf = cv.getCvPdfUrl();
+        String savedPdf = archivoServicio.saveCvPdf(pdf, getServletContext());
+        if (savedPdf != null) {
+            cv.setCvPdfUrl(request.getContextPath() + savedPdf);
+            cvService.save(cv);
+            safeDeleteStoredFile(previousPdf, request);
+        }
+        cv.setTitle(firstNonBlank(draft.getTitle(), request.getParameter("title"), cv.getTitle()));
+        cv.setProfessionalSummary(firstNonBlank(draft.getProfessionalSummary(), request.getParameter("professionalSummary"), cv.getProfessionalSummary()));
+        cv.setPublished("on".equals(request.getParameter("published")));
+        request.setAttribute("graduate", graduate);
+        request.setAttribute("cv", cv);
+        request.setAttribute("educationText", firstNonBlank(draft.getEducationEntries(), request.getParameter("educationEntries")));
+        request.setAttribute("experienceText", firstNonBlank(draft.getExperienceEntries(), request.getParameter("experienceEntries")));
+        request.setAttribute("skillsText", firstNonBlank(draft.getSkillEntries(), request.getParameter("skillEntries")));
+        request.setAttribute("languagesText", firstNonBlank(draft.getLanguageEntries(), request.getParameter("languageEntries")));
+        request.setAttribute("certificationsText", firstNonBlank(draft.getCertificationEntries(), request.getParameter("certificationEntries")));
+        setSuccess(request, "CV importado con IA. Revisa los campos antes de guardar.");
+        forward(request, response, "/WEB-INF/views/graduate/editarCV.jsp", "Editar CV");
+    }
+
+    private void togglePublished(HttpServletRequest request, HttpServletResponse response, Egresados graduate) throws Exception {
+        CV cv = cvService.getOrCreateByGraduateId(graduate.getGraduateId());
+        cv.setPublished("true".equals(request.getParameter("published")));
+        cvService.save(cv);
+        setSuccess(request, cv.isPublished() ? "Tu CV ahora es visible para empresas." : "Tu CV ya no es visible para empresas.");
+        redirect(request, response, "/graduate/dashboard");
     }
 
     private void deleteGraduateCv(HttpServletRequest request, HttpServletResponse response, Egresados graduate) throws Exception {
@@ -188,7 +258,7 @@ public class CVServlet extends BaseServlet {
             e.setStartDate(date(get(p, 3)));
             e.setEndDate(date(get(p, 4)));
             e.setDescription(get(p, 5));
-            if (!ValidacionUtil.isBlank(e.getInstitution())) list.add(e);
+            if (usefulEducation(e)) list.add(e);
         }
         return list;
     }
@@ -205,7 +275,7 @@ public class CVServlet extends BaseServlet {
             e.setEmploymentType(get(p, 4));
             e.setResponsibilities(get(p, 5));
             e.setAchievements(get(p, 6));
-            if (!ValidacionUtil.isBlank(e.getEmpresaNombre())) list.add(e);
+            if (usefulExperience(e)) list.add(e);
         }
         return list;
     }
@@ -247,7 +317,7 @@ public class CVServlet extends BaseServlet {
             c.setExpirationDate(date(get(p, 3)));
             c.setCredentialId(get(p, 4));
             c.setCredentialUrl(get(p, 5));
-            if (!ValidacionUtil.isBlank(c.getName())) list.add(c);
+            if (usefulCertification(c)) list.add(c);
         }
         return list;
     }
@@ -259,32 +329,78 @@ public class CVServlet extends BaseServlet {
         return lines;
     }
 
-    private String get(String[] values, int index) { return index < values.length ? ValidacionUtil.sanitize(values[index]) : ""; }
+    private String get(String[] values, int index) {
+        if (index >= values.length) return "";
+        String value = ValidacionUtil.sanitize(values[index]);
+        if (ValidacionUtil.isBlank(value)) return "";
+        String trimmed = value.trim();
+        return "null".equalsIgnoreCase(trimmed) || "/".equals(trimmed) ? "" : trimmed;
+    }
     private LocalDate date(String value) { try { return ValidacionUtil.isBlank(value) ? null : LocalDate.parse(value); } catch (Exception ex) { return null; } }
+    private String firstNonBlank(String... values) {
+        for (String value : values) if (!ValidacionUtil.isBlank(value)) return value;
+        return "";
+    }
 
     private String joinEducation(List<Educacion> list) {
         StringBuilder sb = new StringBuilder();
-        for (Educacion e : list) sb.append(e.getInstitution()).append('|').append(e.getDegree()).append('|').append(e.getFieldOfStudy()).append('|').append(e.getStartDate()).append('|').append(e.getEndDate()).append('|').append(e.getDescription()).append('\n');
+        for (Educacion e : list) {
+            if (usefulEducation(e)) sb.append(text(e.getInstitution())).append('|').append(text(e.getDegree())).append('|').append(text(e.getFieldOfStudy())).append('|').append(text(e.getStartDate())).append('|').append(text(e.getEndDate())).append('|').append(text(e.getDescription())).append('\n');
+        }
         return sb.toString();
     }
     private String joinExperience(List<Experiencia> list) {
         StringBuilder sb = new StringBuilder();
-        for (Experiencia e : list) sb.append(e.getEmpresaNombre()).append('|').append(e.getPosicion()).append('|').append(e.getStartDate()).append('|').append(e.getEndDate()).append('|').append(e.getEmploymentType()).append('|').append(e.getResponsibilities()).append('|').append(e.getAchievements()).append('\n');
+        for (Experiencia e : list) {
+            if (usefulExperience(e)) sb.append(text(e.getEmpresaNombre())).append('|').append(text(e.getPosicion())).append('|').append(text(e.getStartDate())).append('|').append(text(e.getEndDate())).append('|').append(text(e.getEmploymentType())).append('|').append(text(e.getResponsibilities())).append('|').append(text(e.getAchievements())).append('\n');
+        }
         return sb.toString();
     }
     private String joinSkills(List<Habilidades> list) {
         StringBuilder sb = new StringBuilder();
-        for (Habilidades h : list) sb.append(h.getHabilidadName()).append('|').append(h.getHabilidadCategory().getValue()).append('|').append(h.getPreferenciaLevel()).append('\n');
+        for (Habilidades h : list) sb.append(text(h.getHabilidadName())).append('|').append(h.getHabilidadCategory() == null ? "other" : h.getHabilidadCategory().getValue()).append('|').append(h.getPreferenciaLevel()).append('\n');
         return sb.toString();
     }
     private String joinLanguages(List<Idioma> list) {
         StringBuilder sb = new StringBuilder();
-        for (Idioma i : list) sb.append(i.getLanguageName()).append('|').append(i.getProficiencyLevel().getValue()).append('|').append(i.getCertifications()).append('\n');
+        for (Idioma i : list) sb.append(text(i.getLanguageName())).append('|').append(i.getProficiencyLevel() == null ? "basic" : i.getProficiencyLevel().getValue()).append('|').append(text(i.getCertifications())).append('\n');
         return sb.toString();
     }
     private String joinCertifications(List<Certificacion> list) {
         StringBuilder sb = new StringBuilder();
-        for (Certificacion c : list) sb.append(c.getName()).append('|').append(c.getIssuingOrganization()).append('|').append(c.getIssueDate()).append('|').append(c.getExpirationDate()).append('|').append(c.getCredentialId()).append('|').append(c.getCredentialUrl()).append('\n');
+        for (Certificacion c : list) {
+            if (usefulCertification(c)) sb.append(text(c.getName())).append('|').append(text(c.getIssuingOrganization())).append('|').append(text(c.getIssueDate())).append('|').append(text(c.getExpirationDate())).append('|').append(text(c.getCredentialId())).append('|').append(text(c.getCredentialUrl())).append('\n');
+        }
         return sb.toString();
+    }
+
+    private boolean usefulEducation(Educacion education) {
+        if (education == null || ValidacionUtil.isBlank(education.getInstitution())) return false;
+        return !ValidacionUtil.isBlank(education.getDegree())
+                || !ValidacionUtil.isBlank(education.getFieldOfStudy())
+                || education.getStartDate() != null
+                || education.getEndDate() != null
+                || !ValidacionUtil.isBlank(education.getDescription());
+    }
+
+    private boolean usefulExperience(Experiencia experience) {
+        if (experience == null || ValidacionUtil.isBlank(experience.getEmpresaNombre()) || ValidacionUtil.isBlank(experience.getPosicion())) return false;
+        String company = experience.getEmpresaNombre().toLowerCase();
+        return !company.contains("sin experiencia") && !company.contains("no aplica");
+    }
+
+    private boolean usefulCertification(Certificacion certification) {
+        if (certification == null || ValidacionUtil.isBlank(certification.getName())) return false;
+        return !ValidacionUtil.isBlank(certification.getIssuingOrganization())
+                || certification.getIssueDate() != null
+                || certification.getExpirationDate() != null
+                || !ValidacionUtil.isBlank(certification.getCredentialId())
+                || !ValidacionUtil.isBlank(certification.getCredentialUrl());
+    }
+
+    private String text(Object value) {
+        if (value == null) return "";
+        String text = value.toString().trim();
+        return "null".equalsIgnoreCase(text) || "/".equals(text) ? "" : text;
     }
 }

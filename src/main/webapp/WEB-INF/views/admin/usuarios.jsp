@@ -14,7 +14,7 @@
                     <option value="">Todos los roles</option>
                     <option value="graduate">Egresado</option>
                     <option value="company">Empresa</option>
-                    <option value="admin">Admin</option>
+                    <option value="admin">Administrador</option>
                 </select>
             </div>
             <div class="col-auto">
@@ -47,20 +47,20 @@
                 <c:forEach items="${users}" var="user">
                     <tr>
                         <td>${user.email}</td>
-                        <td>${user.role.value}</td>
-                        <td>${user.status.value}</td>
+                        <td>${user.role.label}</td>
+                        <td>${user.status.label}</td>
                         <td>
                             <form class="d-flex flex-wrap gap-2" method="post" action="${pageContext.request.contextPath}/admin/users">
                                 <input type="hidden" name="userId" value="${user.userId}">
-                                <button class="btn btn-outline-success btn-sm" name="status" value="active" type="submit">active</button>
-                                <button class="btn btn-outline-warning btn-sm" name="status" value="pending" type="submit">pending</button>
-                                <button class="btn btn-outline-secondary btn-sm" name="status" value="inactive" type="submit">inactive</button>
+                                <button class="btn btn-outline-success btn-sm" name="status" value="active" type="submit">Activo</button>
+                                <button class="btn btn-outline-warning btn-sm" name="status" value="pending" type="submit">Pendiente</button>
+                                <button class="btn btn-outline-secondary btn-sm" name="status" value="inactive" type="submit">Inactivo</button>
                             </form>
                             <c:if test="${user.userId ne sessionScope.currentUser.userId}">
                                 <form class="d-flex flex-wrap gap-2 mt-2" method="post" action="${pageContext.request.contextPath}/admin/users">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="userId" value="${user.userId}">
-                                    <input class="form-control form-control-sm" name="confirmDelete" placeholder="DELETE USER" pattern="DELETE USER" required>
+                                    <input class="form-control form-control-sm" name="confirmDelete" placeholder="ELIMINAR USUARIO" pattern="ELIMINAR USUARIO" required>
                                     <button class="btn btn-outline-danger btn-sm" type="submit">Eliminar total</button>
                                 </form>
                             </c:if>

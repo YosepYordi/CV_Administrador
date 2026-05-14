@@ -9,8 +9,8 @@ import com.cvmanager.utils.ValidacionUtil;
 import java.sql.SQLException;
 
 public class AccountDeletionService {
-    private static final String DELETE_CV_CONFIRMATION = "DELETE CV";
-    private static final String DELETE_USER_CONFIRMATION = "DELETE USER";
+    private static final String DELETE_CV_CONFIRMATION = "ELIMINAR CV";
+    private static final String DELETE_USER_CONFIRMATION = "ELIMINAR USUARIO";
     private final AccountDeletionDAO deletionDAO;
 
     public AccountDeletionService() {
@@ -39,7 +39,7 @@ public class AccountDeletionService {
             throw new IllegalArgumentException("No puedes eliminar tu propia cuenta desde gestion de usuarios.");
         }
         if (!DELETE_USER_CONFIRMATION.equals(confirmation)) {
-            throw new IllegalArgumentException("Escribe DELETE USER para confirmar la eliminacion total.");
+            throw new IllegalArgumentException("Escribe ELIMINAR USUARIO para confirmar la eliminacion total.");
         }
         return deletionDAO.deleteUserCompletely(targetUserId);
     }
@@ -49,7 +49,7 @@ public class AccountDeletionService {
             throw new IllegalArgumentException("Perfil de egresado no valido.");
         }
         if (!DELETE_CV_CONFIRMATION.equals(confirmation)) {
-            throw new IllegalArgumentException("Escribe DELETE CV para confirmar la eliminacion total del CV.");
+            throw new IllegalArgumentException("Escribe ELIMINAR CV para confirmar la eliminacion total del CV.");
         }
         return deletionDAO.deleteCvByGraduateId(graduateId);
     }

@@ -82,7 +82,7 @@
                         <span class="tag-chip">${cv.yearsOfExperience} a&ntilde;os</span>
                     </div>
                     <p class="muted">${cv.title}</p>
-                    <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/cv/view?id=${cv.cvId}">Ver CV</a>
+                    <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/cv/view?id=${cv.cvId}">Ver perfil</a>
                 </div>
             </div>
         </c:forEach>

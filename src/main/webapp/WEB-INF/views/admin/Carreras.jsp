@@ -10,7 +10,7 @@
                 <input class="form-control" name="name" placeholder="Nombre de la carrera" required>
                 <input class="form-control" name="code" placeholder="Codigo">
                 <textarea class="form-control" name="description" placeholder="Descripcion"></textarea>
-                <input type="number" class="form-control" name="durationYears" placeholder="Duracion en anios">
+                <input type="number" class="form-control" name="durationYears" placeholder="Duraci&oacute;n en a&ntilde;os">
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="active" checked>
                     <label class="form-check-label">Activa</label>

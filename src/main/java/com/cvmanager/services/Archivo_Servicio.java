@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Optional;
 
 public class Archivo_Servicio {
     public String savePhoto(Part part, ServletContext context) throws IOException {
@@ -44,12 +45,73 @@ public class Archivo_Servicio {
         Path fileName = Path.of(webPath).getFileName();
         if (fileName == null) return;
         Files.deleteIfExists(uploadDirectory(context, folder, fallback).resolve(fileName).normalize());
+        legacyUploadDirectory(context, folder).ifPresent(path -> {
+            try {
+                Files.deleteIfExists(path.resolve(fileName).normalize());
+            } catch (IOException ignored) {
+            }
+        });
+    }
+
+    public Optional<Path> resolveStoredFile(String webPath, ServletContext context) {
+        if (webPath == null || webPath.isBlank()) return Optional.empty();
+        String normalized = normalizeUploadPath(webPath, context == null ? null : context.getContextPath());
+        String folder;
+        String fallback;
+        if (normalized.startsWith("/uploads/photos/")) {
+            folder = "/uploads/photos";
+            fallback = "photos";
+        } else if (normalized.startsWith("/uploads/cvs/")) {
+            folder = "/uploads/cvs";
+            fallback = "cvs";
+        } else {
+            return Optional.empty();
+        }
+        Path fileName = Path.of(normalized).getFileName();
+        if (fileName == null) return Optional.empty();
+        Path persistent = uploadDirectory(context, folder, fallback).resolve(fileName).normalize();
+        if (Files.isRegularFile(persistent)) return Optional.of(persistent);
+        Optional<Path> legacy = legacyUploadDirectory(context, folder).map(path -> path.resolve(fileName).normalize());
+        return legacy.filter(Files::isRegularFile);
     }
 
     private Path uploadDirectory(ServletContext context, String webPath, String fallbackFolder) {
+        Path persistentRoot = persistentUploadRoot(context);
+        if (persistentRoot != null) return persistentRoot.resolve(fallbackFolder);
+        return legacyUploadDirectory(context, webPath)
+                .orElseGet(() -> Path.of(System.getProperty("java.io.tmpdir"), "cvmanager-uploads", fallbackFolder));
+    }
+
+    private Optional<Path> legacyUploadDirectory(ServletContext context, String webPath) {
+        if (context == null) return Optional.empty();
         String realPath = context.getRealPath(webPath);
-        if (realPath != null) return Path.of(realPath);
-        return Path.of(System.getProperty("java.io.tmpdir"), "cvmanager-uploads", fallbackFolder);
+        if (realPath != null) return Optional.of(Path.of(realPath));
+        String rootPath = context.getRealPath("/");
+        if (rootPath != null && !rootPath.isBlank()) {
+            String relativePath = webPath.startsWith("/") ? webPath.substring(1) : webPath;
+            return Optional.of(Path.of(rootPath).resolve(relativePath));
+        }
+        return Optional.empty();
+    }
+
+    private Path persistentUploadRoot(ServletContext context) {
+        String configured = context == null ? null : context.getInitParameter("cvmanager.uploadRoot");
+        if (configured == null || configured.isBlank()) configured = System.getProperty("cvmanager.uploadRoot");
+        if (configured == null || configured.isBlank()) configured = System.getenv("CVMANAGER_UPLOAD_ROOT");
+        if (configured != null && !configured.isBlank()) return Path.of(configured.trim());
+        String instanceRoot = System.getProperty("com.sun.aas.instanceRoot");
+        if (instanceRoot != null && !instanceRoot.isBlank()) {
+            return Path.of(instanceRoot).resolve("cvmanager-uploads");
+        }
+        return null;
+    }
+
+    private String normalizeUploadPath(String url, String contextPath) {
+        String webPath = url.trim();
+        if (contextPath != null && !contextPath.isBlank() && webPath.startsWith(contextPath)) {
+            webPath = webPath.substring(contextPath.length());
+        }
+        return webPath;
     }
 
     private String photoExtension(Part part) throws IOException {

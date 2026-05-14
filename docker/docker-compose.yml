@@ -17,6 +17,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+  ollama:
+    image: ollama/ollama
+    container_name: cv_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - cv_ollama:/root/.ollama
 
 volumes:
   cv_administrador_mysql:
+  cv_ollama:

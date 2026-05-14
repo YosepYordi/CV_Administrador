@@ -16,6 +16,7 @@ public class CV implements Serializable {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String graduateName;
+    private String graduatePhotoUrl;
     private String careerName;
     private String city;
     private boolean graduatePublic = true;
@@ -46,6 +47,8 @@ public class CV implements Serializable {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public String getGraduateName() { return graduateName; }
     public void setGraduateName(String graduateName) { this.graduateName = graduateName; }
+    public String getGraduatePhotoUrl() { return graduatePhotoUrl; }
+    public void setGraduatePhotoUrl(String graduatePhotoUrl) { this.graduatePhotoUrl = graduatePhotoUrl; }
     public String getCareerName() { return careerName; }
     public void setCareerName(String careerName) { this.careerName = careerName; }
     public String getCity() { return city; }

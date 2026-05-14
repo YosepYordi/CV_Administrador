@@ -90,8 +90,8 @@
                     <c:forEach items="${recentUsers}" var="user">
                         <tr>
                             <td>${user.email}</td>
-                            <td>${user.role.value}</td>
-                            <td>${user.status.value}</td>
+                            <td>${user.role.label}</td>
+                            <td>${user.status.label}</td>
                         </tr>
                     </c:forEach>
                     </tbody>

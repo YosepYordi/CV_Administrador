@@ -1,3 +1,4 @@
+<%@ page import="com.cvmanager.utils.RedirectUtil" %>
 <%
-    response.sendRedirect(request.getContextPath() + "/public/home");
+    RedirectUtil.redirect(request, response, "/public/home");
 %>

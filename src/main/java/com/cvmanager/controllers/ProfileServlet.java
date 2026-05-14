@@ -1,9 +1,14 @@
 package com.cvmanager.controllers;
 
 import com.cvmanager.dao.impl.CareerDAOImpl;
+import com.cvmanager.dao.impl.CompanyDAOImpl;
+import com.cvmanager.dao.impl.ContactRequestDAOImpl;
 import com.cvmanager.dao.impl.EgresadoDAOImpl;
 import com.cvmanager.dao.impl.UsuarioDAOImpl;
+import com.cvmanager.dao.interfaces.CompanyDAO;
+import com.cvmanager.dao.interfaces.ContactRequestDAO;
 import com.cvmanager.models.CV;
+import com.cvmanager.models.ContactRequest;
 import com.cvmanager.models.Egresados;
 import com.cvmanager.models.User;
 import com.cvmanager.services.AccountDeletionService;
@@ -23,12 +28,14 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@WebServlet(urlPatterns = {"/graduate/dashboard", "/graduate/profile", "/graduate/profile/edit"})
+@WebServlet(urlPatterns = {"/graduate/dashboard", "/graduate/profile", "/graduate/profile/edit", "/graduate/requests", "/graduate/companies"})
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024)
 public class ProfileServlet extends BaseServlet {
     private final EgresadoDAOImpl egresadoDAO = new EgresadoDAOImpl();
     private final UsuarioDAOImpl usuarioDAO = new UsuarioDAOImpl();
     private final CareerDAOImpl careerDAO = new CareerDAOImpl();
+    private final CompanyDAO companyDAO = new CompanyDAOImpl();
+    private final ContactRequestDAO contactRequestDAO = new ContactRequestDAOImpl();
     private final CVService cvService = new CVService();
     private final Archivo_Servicio archivoServicio = new Archivo_Servicio();
     private final AccountDeletionService accountDeletionService = new AccountDeletionService();
@@ -42,6 +49,12 @@ public class ProfileServlet extends BaseServlet {
             if ("/graduate/dashboard".equals(request.getServletPath())) {
                 request.setAttribute("cv", cvService.getOrCreateByGraduateId(graduate.getGraduateId()));
                 forward(request, response, "/WEB-INF/views/graduate/Panel.jsp", "Panel del egresado");
+            } else if ("/graduate/requests".equals(request.getServletPath())) {
+                request.setAttribute("requests", contactRequestDAO.findByGraduateId(graduate.getGraduateId()));
+                forward(request, response, "/WEB-INF/views/graduate/Solicitudes.jsp", "Solicitudes de contacto");
+            } else if ("/graduate/companies".equals(request.getServletPath())) {
+                request.setAttribute("companies", companyDAO.findAllActive());
+                forward(request, response, "/WEB-INF/views/graduate/Empresas.jsp", "Empresas registradas");
             } else if ("/graduate/profile/edit".equals(request.getServletPath())) {
                 forward(request, response, "/WEB-INF/views/graduate/editarPerfil.jsp", "Editar perfil");
             } else {
@@ -61,6 +74,10 @@ public class ProfileServlet extends BaseServlet {
                 changePassword(request, response);
             } else if ("deleteAccount".equals(action)) {
                 deleteAccount(request, response);
+            } else if ("acceptRequest".equals(action) || "rejectRequest".equals(action)) {
+                updateContactRequest(request, response, action);
+            } else if ("requestCompanyContact".equals(action)) {
+                requestCompanyContact(request, response);
             } else {
                 updateProfile(request, response);
             }
@@ -68,6 +85,30 @@ public class ProfileServlet extends BaseServlet {
             request.setAttribute("formError", ex.getMessage());
             doGet(request, response);
         }
+    }
+
+    private void updateContactRequest(HttpServletRequest request, HttpServletResponse response, String action) throws Exception {
+        Egresados graduate = loadGraduate(request);
+        Long requestId = ValidacionUtil.parseLong(request.getParameter("requestId"))
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud no valida."));
+        ContactRequest.Status status = "acceptRequest".equals(action)
+                ? ContactRequest.Status.ACCEPTED
+                : ContactRequest.Status.REJECTED;
+        if (!contactRequestDAO.updateStatusForGraduate(requestId, graduate.getGraduateId(), status)) {
+            throw new IllegalArgumentException("No se pudo actualizar la solicitud.");
+        }
+        setSuccess(request, status == ContactRequest.Status.ACCEPTED ? "Solicitud aceptada." : "Solicitud rechazada.");
+        redirect(request, response, "/graduate/requests");
+    }
+
+    private void requestCompanyContact(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        Egresados graduate = loadGraduate(request);
+        Long companyId = ValidacionUtil.parseLong(request.getParameter("companyId"))
+                .orElseThrow(() -> new IllegalArgumentException("Empresa no valida."));
+        Long requestId = contactRequestDAO.createForCompany(graduate.getGraduateId(), companyId, ValidacionUtil.sanitize(request.getParameter("message")));
+        if (requestId == null) throw new IllegalArgumentException("No se pudo enviar la solicitud.");
+        setSuccess(request, "Solicitud enviada a la empresa.");
+        redirect(request, response, "/graduate/companies");
     }
 
     private void updateProfile(HttpServletRequest request, HttpServletResponse response) throws Exception {

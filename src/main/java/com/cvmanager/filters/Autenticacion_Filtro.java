@@ -1,6 +1,7 @@
 package com.cvmanager.filters;
 
 import com.cvmanager.utils.Constantes;
+import com.cvmanager.utils.RedirectUtil;
 
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
@@ -15,7 +16,7 @@ public class Autenticacion_Filtro implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
         if (req.getSession().getAttribute(Constantes.SESSION_USER) == null) {
-            res.sendRedirect(req.getContextPath() + "/auth/login");
+            RedirectUtil.redirect(req, res, "/auth/login");
             return;
         }
         chain.doFilter(request, response);

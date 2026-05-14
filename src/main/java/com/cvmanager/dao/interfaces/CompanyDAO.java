@@ -9,6 +9,7 @@ import java.util.Optional;
 public interface CompanyDAO {
     Optional<Company> findByUserId(Long userId) throws SQLException;
     Optional<Company> findById(Long companyId) throws SQLException;
+    default List<Company> findAllActive() throws SQLException { return List.of(); }
     Long create(Company company) throws SQLException;
     boolean addFavorite(Long companyId, Long cvId) throws SQLException;
     boolean removeFavorite(Long companyId, Long cvId) throws SQLException;

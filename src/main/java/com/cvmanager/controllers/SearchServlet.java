@@ -6,6 +6,7 @@ import com.cvmanager.dao.interfaces.CompanyDAO;
 import com.cvmanager.dao.interfaces.ContactRequestDAO;
 import com.cvmanager.models.CV;
 import com.cvmanager.models.Company;
+import com.cvmanager.models.ContactRequest;
 import com.cvmanager.models.SearchCriteria;
 import com.cvmanager.models.User;
 import com.cvmanager.services.AccountDeletionService;
@@ -23,7 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 
-@WebServlet(urlPatterns = {"/company/dashboard", "/company/search", "/company/favorites", "/company/account"})
+@WebServlet(urlPatterns = {"/company/dashboard", "/company/search", "/company/favorites", "/company/requests", "/company/account"})
 public class SearchServlet extends BaseServlet {
     private final BusquedaServicio busquedaServicio = new BusquedaServicio();
     private final CVService cvService = new CVService();
@@ -46,6 +47,12 @@ public class SearchServlet extends BaseServlet {
                 for (Long id : favoriteIds) cvService.findById(id, false).ifPresent(favoriteCvs::add);
                 request.setAttribute("favorites", favoriteCvs);
                 forward(request, response, "/WEB-INF/views/company/Preferencia.jsp", "Perfiles favoritos");
+                return;
+            }
+            if ("/company/requests".equals(request.getServletPath())) {
+                Long companyId = resolveCompanyId(request).orElseThrow(() -> new IllegalStateException("No existe perfil de empresa para la sesion actual."));
+                request.setAttribute("requests", contactRequestDAO.findByCompanyId(companyId));
+                forward(request, response, "/WEB-INF/views/company/Solicitudes.jsp", "Solicitudes enviadas");
                 return;
             }
             if ("/company/account".equals(request.getServletPath())) {
@@ -119,6 +126,20 @@ public class SearchServlet extends BaseServlet {
                 redirect(request, response, safeReturnTo(request));
                 return;
             }
+            if ("acceptRequest".equals(action) || "rejectRequest".equals(action)) {
+                Long requestId = ValidacionUtil.parseLong(request.getParameter("requestId"))
+                        .orElseThrow(() -> new IllegalArgumentException("Solicitud no valida."));
+                Long companyId = resolveCompanyId(request).orElseThrow(() -> new IllegalStateException("No existe perfil de empresa para la sesion actual."));
+                ContactRequest.Status status = "acceptRequest".equals(action)
+                        ? ContactRequest.Status.ACCEPTED
+                        : ContactRequest.Status.REJECTED;
+                if (!contactRequestDAO.updateStatusForCompany(requestId, companyId, status)) {
+                    throw new IllegalArgumentException("No se pudo actualizar la solicitud.");
+                }
+                setSuccess(request, status == ContactRequest.Status.ACCEPTED ? "Solicitud aceptada." : "Solicitud rechazada.");
+                redirect(request, response, "/company/requests");
+                return;
+            }
         } catch (Exception ex) {
             setError(request, ex.getMessage());
             redirect(request, response, safeReturnTo(request));
@@ -189,7 +210,7 @@ public class SearchServlet extends BaseServlet {
 
     private String safeReturnTo(HttpServletRequest request) {
         String returnTo = request.getParameter("returnTo");
-        if (!ValidacionUtil.isBlank(returnTo) && returnTo.startsWith("/company")) return returnTo;
+        if (!ValidacionUtil.isBlank(returnTo) && (returnTo.startsWith("/company") || returnTo.startsWith("/cv/view"))) return returnTo;
         return "/company/favorites";
     }
 

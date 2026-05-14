@@ -29,7 +29,7 @@
                 <div class="col-md-6"><strong>Portafolio:</strong><br>${graduate.portfolioUrl}</div>
                 <div class="col-12"><strong>Dirección:</strong><br>${graduate.address}</div>
                 <div class="col-md-6"><strong>Carrera:</strong><br>${graduate.careerName}</div>
-                <div class="col-md-6"><strong>Anio de egreso:</strong><br>${graduate.graduationYear}</div>
+                <div class="col-md-6"><strong>A&ntilde;o de egreso:</strong><br>${graduate.graduationYear}</div>
                 <div class="col-md-6"><strong>Salario esperado:</strong><br>${graduate.expectedSalary}</div>
                 <div class="col-md-6"><strong>Visibilidad:</strong><br>${graduate.public ? 'Perfil visible para empresas' : 'Perfil privado'}</div>
                 <div class="col-md-6"><strong>Disponibilidad:</strong><br>${graduate.availability}</div>
