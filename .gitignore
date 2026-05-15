@@ -6,6 +6,7 @@ target/
 .nb-gradle/
 .runtime/
 .playwright-cli/
+.playwright-mcp/
 
 nbproject/private/
 src/main/resources/database.properties
