@@ -11,6 +11,7 @@ Sistema web para la gestion de curriculum vitae de egresados y busqueda de talen
 - GlassFish 8 / Jakarta EE 11
 - Bootstrap 5
 - JUnit 5
+- Ollama con modelo `gemma4:e2b` para importacion asistida de CV desde PDF
 
 ## Requisitos
 
@@ -18,6 +19,7 @@ Sistema web para la gestion de curriculum vitae de egresados y busqueda de talen
 - MySQL 8. Puede levantarse con Docker Desktop o instalarse localmente con MySQL Server.
 - MySQL Workbench es opcional y sirve como cliente grafico; por si solo no reemplaza a MySQL Server.
 - Maven incluido en `apache-maven/` o una instalacion local compatible.
+- Ollama local si se desea usar la importacion de CV con IA.
 
 ## Configuracion local
 
@@ -38,6 +40,19 @@ Levantar IA local para importar CV desde PDF:
 ```powershell
 docker run -d --name cv_ollama -v cv_ollama:/root/.ollama -p 11434:11434 --restart unless-stopped ollama/ollama
 docker exec cv_ollama ollama pull gemma4:e2b
+```
+
+## IA implementada
+
+El sistema incluye una integracion de IA local con Ollama para importar CV desde archivos PDF. La aplicacion extrae el texto del PDF con Apache PDFBox y lo envia al endpoint de Ollama configurado en `ollama.chat.url`; por defecto usa `http://localhost:11434/api/chat` con el modelo `gemma4:e2b`.
+
+La IA devuelve un JSON estructurado que se transforma en un borrador de CV con resumen profesional, educacion, experiencia, habilidades, idiomas y certificaciones. El usuario puede revisar y editar los datos antes de guardarlos, evitando registrar informacion inventada o incorrecta.
+
+La configuracion puede cambiarse en `src/main/resources/database.properties`:
+
+```properties
+ollama.chat.url=http://localhost:11434/api/chat
+ollama.model=gemma4:e2b
 ```
 
 ### Opcion B: MySQL local con Workbench, sin Docker
@@ -98,10 +113,11 @@ El artefacto queda en `target/cvmanager.war`.
 - Autenticacion, registro, recuperacion de contrasena y filtros por rol.
 - Perfil de egresado y configuracion de privacidad.
 - Gestion de CV estructurado con educacion, experiencia, habilidades, idiomas y certificaciones.
+- Importacion asistida de CV desde PDF usando IA local con Ollama.
 - Busqueda empresarial con filtros por carrera, ciudad, habilidad, idioma, experiencia y palabra clave.
 - Panel administrativo con usuarios, carreras, metricas, reportes y auditoria.
 - Panel de empresas con favoritos y solicitudes de contacto.
 
 ## Documentacion
 
-La monografia del proyecto esta incluida en `Monografia_CV_Manager_APA7.docx`.
+La documentacion principal del proyecto esta en este README. Los documentos Word de monografia no se versionan en Git para mantener el repositorio liviano.
